@@ -1,0 +1,18 @@
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "mytimer",
+      "type": "timerTrigger",
+      "direction": "in",
+      "schedule": "5 * * * *"
+    },
+    {
+      "name": "outputBlob",
+      "type": "blob",
+      "direction": "out",
+      "path": "iot/source/opensense/{DateTime:yyyy}/{DateTime:MM}/{DateTime:dd}/{DateTime:HH}/opensense_{DateTime}_{rand-guid}.json",
+      "connection": "DATA_LAKE_CONN_STR"
+    }
+  ]
+}

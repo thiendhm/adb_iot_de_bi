@@ -1,0 +1,82 @@
+{
+  "_id": "6a1564a7253e80000738f37c",
+  "grouptag": [],
+  "model": "luftdaten_sds011_bme280",
+  "name": "Swimlake",
+  "currentLocation": {
+    "type": "Point",
+    "coordinates": [105.823413, 21.070477, 20],
+    "timestamp": "2026-05-26T09:15:19.422Z"
+  },
+  "exposure": "outdoor",
+  "sensors": [
+    {
+      "_id": "6a1564a7253e80000738f37d",
+      "title": "PM10",
+      "unit": "µg/m³",
+      "sensorType": "SDS 011",
+      "icon": "osem-cloud",
+      "lastMeasurement": {
+        "createdAt": "2026-10-26T07:14:44.436Z",
+        "value": "20.50"
+      }
+    },
+    {
+      "_id": "6a1564a7253e80000738f37e",
+      "title": "PM2.5",
+      "unit": "µg/m³",
+      "sensorType": "SDS 011",
+      "icon": "osem-cloud",
+      "lastMeasurement": {
+        "createdAt": "2026-10-26T07:14:44.436Z",
+        "value": "18.40"
+      }
+    },
+    {
+      "_id": "6a1564a7253e80000738f37f",
+      "title": "Temperatur",
+      "unit": "°C",
+      "sensorType": "BME280",
+      "icon": "osem-thermometer",
+      "lastMeasurement": {
+        "createdAt": "2026-10-26T07:14:44.436Z",
+        "value": "33.96"
+      }
+    },
+    {
+      "_id": "6a1564a7253e80000738f380",
+      "title": "rel. Luftfeuchte",
+      "unit": "%",
+      "sensorType": "BME280",
+      "icon": "osem-humidity",
+      "lastMeasurement": {
+        "createdAt": "2026-10-26T07:14:44.436Z",
+        "value": "52.92"
+      }
+    },
+    {
+      "_id": "6a1564a7253e80000738f381",
+      "title": "Luftdruck",
+      "unit": "Pa",
+      "sensorType": "BME280",
+      "icon": "osem-barometer",
+      "lastMeasurement": {
+        "createdAt": "2026-10-26T07:14:44.436Z",
+        "value": "101237.22"
+      }
+    }
+  ],
+  "updatedAt": "2026-10-26T07:14:44.441Z",
+  "createdAt": "2026-05-26T09:15:19.428Z",
+  "lastMeasurementAt": "2026-10-26T07:14:44.436Z",
+  "loc": [
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [105.823413, 21.070477, 20],
+        "timestamp": "2026-05-26T09:15:19.422Z"
+      },
+      "type": "Feature"
+    }
+  ]
+}
