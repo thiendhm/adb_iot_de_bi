@@ -1,7 +1,7 @@
 # This is a Declarative Automation Bundle definition for dust_stream_elt.
 # See https://docs.databricks.com/dev-tools/bundles/index.html for documentation.
 bundle:
-  name: dust_stream_elt
+  name: pipe_dust_stream_elt
   uuid: b364a3fc-0cbe-4714-847a-51b2bacc73b9
 
 include:
@@ -10,10 +10,36 @@ include:
 # Variable declarations. These variables are assigned in the dev/prod targets below.
 variables:
   catalog:
-    description: The catalog to use
+    default: "adb_std"
+  bronze_table: 
+    default: "bronze.iot_raw"
+  adls_base:
+    default: "abfss://iot@adls2tdstudent.dfs.core.windows.net"
   schema:
-    description: The schema to use
+    default: "silver"
 
+# resource definition - not in basic setup
+resources:
+  jobs:
+    bronze_to_silver_job:
+      name: "[${bundle.target}] iot bronze to silver"
+      max_concurrent_runs: 1
+
+      schedule:
+        # runs every 1 hour
+        quartz_cron_expression: "0 7 * * * ?" # 7 minute after hour
+        timezone_id: "UTC"
+
+      tasks:
+        - task_key: bronze_to_silver
+          # omit cluster key on notebook task
+          notebook_task:
+            notebook_path: ./src/pipe_dust_stream_elt/transformations/dust_brz_sil.py
+            base_parameters:
+              catalogs: ${var.catalog}
+              bronze_table: ${var.bronze_table}
+              silver_table: "${var.schema}.iot_env_measurements"
+              adls_base: ${var.adls_base}
 targets:
   dev:
     # The default target uses 'mode: development' to create a development copy.
@@ -35,7 +61,8 @@ targets:
       root_path: /Workspace/Users/21880139@student.hcmus.edu.vn/.bundle/${bundle.name}/${bundle.target}
     variables:
       catalog: adb_std
-      schema: prod
+      bronze_table: "bronze.iot_raw"
+      schema: "silver"
     permissions:
       - user_name: 21880139@student.hcmus.edu.vn
         level: CAN_MANAGE

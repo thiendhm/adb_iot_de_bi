@@ -2,16 +2,16 @@
 
 resources:
   pipelines:
-    dust_stream_elt_etl:
-      name: dust_stream_elt_etl
+    pipe_dust_stream_elt:
+      name: pipe_dust_stream_elt
       catalog: ${var.catalog}
       schema: ${var.schema}
       serverless: true
-      root_path: "../src/dust_stream_elt_etl"
+      root_path: "../src/pipe_dust_stream_elt"
 
       libraries:
         - glob:
-            include: ../src/dust_stream_elt_etl/transformations/**
+            include: ../src/pipe_dust_stream_elt/transformations/**
 
       environment:
         dependencies:
