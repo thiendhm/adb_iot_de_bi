@@ -1,18 +1,21 @@
 {
+  "custom_summary": "Dust PM10 Over threshold-Databricks",
   "evaluation": {
     "source": {
       "name": "device_id",
-      "display": "source",
-      "aggregation": "COUNT"
+      "display": "device_id",
+      "aggregation": "AGGREGATION_UNSPECIFIED"
     },
-    "comparison_operator": "GREATER_THAN_OR_EQUAL",
+    "comparison_operator": "IS_NOT_NULL",
     "threshold": {
       "value": {
-        "double_value": 1.0
+        "string_value": ""
       }
     },
     "empty_result_state": "OK",
-    "notification": {}
+    "notification": {
+      "retrigger_seconds": 1
+    }
   },
   "schedule": {
     "quartz_cron_schedule": "52 10 * * * ?",
@@ -67,14 +70,37 @@
     "ORDER BY _ingested_at DESC;"
   ],
   "custom_description_lines": [
-    "<span style=\"font-size: 12px;\">Hi Admin,</span>",
+    "<span style=\"font-size:12px\">Hi Admin,</span>",
     "",
-    "<span style=\"font-size: 12px;\">Dust value over threshold.</span>",
+    "<span style=\"font-size:12px\">Dust value over threshold.</span>",
     "",
-    "<span style=\"font-size: 12px;\">Threshold: {{ALERT\\_CONDITION}}</span>",
+    "<span style=\"font-size:12px\">Threshold:  </span><span style=\"font-size:12px\">{{ALERT_NAME}}</span> {{ALERT_COLUMN}}  {{ALERT_CONDITION}}  {{ALERT_THRESHOLD}} ",
     "",
-    "<span style=\"font-size: 12px;\">Details</span>",
+    "<span style=\"font-size:12px\">Details</span>",
     "",
-    "<span style=\"font-size: 12px;\">{{QUERY\\_RESULT\\_TABLE}}</span>"
+    "<table style=\"width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 13px;\">",
+    "  <thead>",
+    "    <tr style=\"background-color: #f2f4f8; text-align: left;\">",
+    "      <th style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">Hour Window</th>",
+    "      <th style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">Device ID</th>",
+    "      <th style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">Device Name</th>",
+    "      <th style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">PM10 Value</th>",
+    "      <th style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">Rolling Median (60m)</th>",
+    "      <th style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">Ingested At</th>",
+    "    </tr>",
+    "  </thead>",
+    "  <tbody>",
+    "    {{#QUERY_RESULT_ROWS}}",
+    "    <tr>",
+    "      <td style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">{{hour_window}}</td>",
+    "      <td style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">{{device_id}}</td>",
+    "      <td style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">{{device_name}}</td>",
+    "      <td style=\"padding: 8px 12px; border: 1px solid #dcdcdc; color: #d9534f; font-weight: bold;\">{{value}}</td>",
+    "      <td style=\"padding: 8px 12px; border: 1px solid #dcdcdc; font-weight: bold;\">{{rolling_median_60m}}</td>",
+    "      <td style=\"padding: 8px 12px; border: 1px solid #dcdcdc;\">{{_ingested_at}}</td>",
+    "    </tr>",
+    "    {{/QUERY_RESULT_ROWS}}",
+    "  </tbody>",
+    "</table>"
   ]
 }
