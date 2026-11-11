@@ -6,28 +6,28 @@ from pyspark.sql.functions import col
 #     return spark.read.table("samples.nyctaxi.trips")
 
 from pyspark.sql import functions as F
-form pyspark.sql.types import StructType, StructField, StringType, ArrayType
+from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from delta.tables import DeltaTable
 
 # 1. minimal parameter
 dbutils.widgets.text("catalog", "adb_std")
 dbutils.widgets.text("bronze_table", "bronze.iot_raw")
-dbutis.widgets.text("silver_table", "silver.iot_env_measurements")
+dbutils.widgets.text("silver_table", "silver.iot_env_measurements")
 dbutils.widgets.text("adls_base", "abfss://iot@adls2tdstudent.dfs.core.windows.net")
 
 
 
-catalog = dbutils.wigets.get("catalog")
-bronze_3p = f"{catalog}.{dbutils.widets.get("bronze_table")}
-silver_3p = f"{catalog}.{dbutils.wigets.get("silver_table")}"
+catalog = dbutils.widgets.get("catalog")
+bronze_3p = f"{catalog}.{dbutils.widgets.get('bronze_table')}"
+silver_3p = f"{catalog}.{dbutils.widgets.get('silver_table')}"
 adls_base = dbutils.widgets.get("adls_base").rstrip("/")
 
 silver_path = f"{adls_base}/silver/iot_env_measurements"
 checkpoint_path = f"{adls_base}/silver/_checkpoints/iot_measurements"
 
 # 2. ensure external silver table exists ADLS2
-spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.silver")
-spark.sql(f"""
+# DDL is not allowed at pipeline top level; it runs inside the sink handler instead
+silver_ddl = f"""
     CREATE TABLE IF NOT EXISTS {silver_3p} (
         value DOUBLE,
         measured_at TIMESTAMP,
@@ -43,9 +43,9 @@ spark.sql(f"""
         _bronze_ingested_at TIMESTAMP
     )
     USING DELTA
-        CLUSTER BY (device_id, metric_name, measuredAt)
+        CLUSTER BY (device_id, metric_name, measured_at)
         LOCATION '{silver_path}'
-""")
+"""
 
 # 3. define minimal schema
 reading_schema = StructType([
@@ -57,15 +57,14 @@ metric_schema = StructType([
     StructField("metric_name", StringType(), True),
     StructField("ingest_time", StringType(), True),
     StructField("sensor_id", StringType(), True),
-    StructField("sensor_type", StringType(), True)
+    StructField("sensor_type", StringType(), True),
     StructField("unit", StringType(), True),
     StructField("data", ArrayType(reading_schema), True)
 ])
 
 # 4. read bronze and descompose sensor column
-bronze_df = spark.table(bronze_full)
-
-silver_df = (
+def build_silver_df(bronze_df):
+    return (
     bronze_df
     .filter( F.col("_rescued_data").isNull() )
     # 4.1 parse each metric column from JSON String to Struct and combine into array
@@ -87,37 +86,32 @@ silver_df = (
         F.col("device_id"),
         F.col("device_name"),
         F.col("model"),
-        F.col("currentLocation")
+        F.col("currentLocation"),
         F.col("metric_parsed.metric_name").alias("metric_name"),
         F.col("metric_parsed.sensor_id").alias("sensor_id"),
         F.col("metric_parsed.sensor_type").alias("sensor_type"),
         F.col("metric_parsed.unit").alias("unit"),
         F.col("reading.value").cast("double").alias("value"),
         F.to_timestamp(F.col("reading.createdAt")).alias("measured_at"),
-        F.to_timestamp(F.col("metric_parsed.ingest_time")).alias("ingested_at"), #azure func get
+        F.to_timestamp(F.col("metric_parsed.ingest_time")).alias("_ingested_at"), #azure func get
         F.to_timestamp(F.col("_ingested_at")).alias("_bronze_ingested_at") #land to adls2
     )
 )
+@dp.foreach_batch_sink(name="upsert_to_silver")
 def upsert_to_silver( micro_batch_df, batch_id):
     if micro_batch_df.isEmpty():
         return
+    micro_batch_df.sparkSession.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.silver")
+    micro_batch_df.sparkSession.sql(silver_ddl)
     # dedup within micro batch on natural key ( device, sensor, measure_at)
     deduped_df = micro_batch_df.dropDuplicates(["device_id", "sensor_id", "measured_at"])
 
     target_table = DeltaTable.forName(micro_batch_df.sparkSession, silver_3p)
     target_table.alias("t").merge(
         deduped_df.alias("s"),
-        "t.device_id = s.device_id AND t.sensor_id = s.sensor_id AND t.measured_at = s.measured_at")
-        .whenMatchedUpdateAll()
-        .whenNotMatchedInsertAll()
-        .execute()
-# 6. run incremental batch
-query = (
-    silver_df.writeStream
-    .foreachBatch(upsert_to_silver)
-    .outputMode("update")
-    .option("checkpointLocation",checkpoint_path)
-    .trigger(availableNow=True)
-    .start()
-)
-query.awaitTermination()
+        "t.device_id = s.device_id AND t.sensor_id = s.sensor_id AND t.measured_at = s.measured_at"
+        ).whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
+# 6. run incremental batch (checkpoint and trigger are managed by the pipeline)
+@dp.append_flow(target="upsert_to_silver")
+def bronze_to_silver_flow():
+    return build_silver_df(spark.readStream.table(bronze_3p))
