@@ -1,0 +1,97 @@
+.venv/
+.vscode/
+# ==========================================
+# Databricks (CLI, Asset Bundles, Connect)
+# ==========================================
+.databricks/
+.databrickscfg
+*.dbx/
+
+# ==========================================
+# PySpark & Apache Spark Runtime Artifacts
+# ==========================================
+spark-warehouse/
+metastore_db/
+derby.log
+.spark-staging/
+*.crc
+
+# ==========================================
+# Local Data & File Formats
+# ==========================================
+data/
+datasets/
+*.parquet
+*.orc
+*.avro
+*.csv
+*.tsv
+*.json
+*.delta
+_delta_log/
+
+# ==========================================
+# Secrets & Environment Variables
+# ==========================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# ==========================================
+# Python & Packaging
+# ==========================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+.conda/
+
+# Testing & Linting
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ==========================================
+# Jupyter & Databricks Notebooks (Local)
+# ==========================================
+.ipynb_checkpoints/
+*-checkpoint.ipynb
+
+# ==========================================
+# IDEs & OS Files
+# ==========================================
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
