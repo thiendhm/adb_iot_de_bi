@@ -39,12 +39,6 @@ resources:
           pipeline_task:
             pipeline_id: ${resources.pipelines.pipe_dust_stream_elt.id}
             full_refresh: false
-            # pipeline_path: ./src/pipe_dust_stream_elt/transformations/dust_brz_sil.py
-            # base_parameters:
-            #   catalog: ${var.catalog}
-            #   bronze_table: ${var.bronze_table}
-            #   silver_table: "${var.schema}.iot_env_measurements"
-            #   adls_base: ${var.adls_base}
 targets:
   dev:
     # The default target uses 'mode: development' to create a development copy.
