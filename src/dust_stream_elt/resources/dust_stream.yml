@@ -2,7 +2,9 @@
 
 resources:
   pipelines:
-    pipe_dust_stream_elt:
+    # resource key must stay dust_stream_elt_etl: it is the key the deployed pipeline
+    # (25501f37-...) is tracked under in bundle state; renaming it makes deploy delete/recreate it
+    dust_stream_elt_etl:
       name: pipe_dust_stream_elt
       catalog: ${var.catalog}
       schema: ${var.schema}

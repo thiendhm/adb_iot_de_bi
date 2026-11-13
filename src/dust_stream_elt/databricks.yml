@@ -37,7 +37,7 @@ resources:
         # then bronze -> silver (dust_brz_sil.py); order comes from the dataset dependency
         - task_key: raw_to_bronze_to_silver
           pipeline_task:
-            pipeline_id: ${resources.pipelines.pipe_dust_stream_elt.id}
+            pipeline_id: ${resources.pipelines.dust_stream_elt_etl.id}
             full_refresh: false
 targets:
   dev:
