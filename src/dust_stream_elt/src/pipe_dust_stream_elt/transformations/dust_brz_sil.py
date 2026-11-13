@@ -9,24 +9,24 @@ from pyspark.sql import functions as F
 from pyspark.sql.types import StructType, StructField, StringType, ArrayType
 from delta.tables import DeltaTable
 
-# 1. minimal parameter
-dbutils.widgets.text("catalog", "adb_std")
-dbutils.widgets.text("bronze_table", "bronze.iot_raw")
-dbutils.widgets.text("silver_table", "silver.iot_env_measurements")
-dbutils.widgets.text("adls_base", "abfss://iot@adls2tdstudent.dfs.core.windows.net")
+# 1. parameters come from the pipeline `configuration` block (resources/dust_stream.yml)
+#    Fall back to defaults where serverless interactive compute blocks custom keys.
+def _conf(key, default):
+    try:
+        return spark.conf.get(key, default)
+    except Exception:
+        return default
 
-
-
-catalog = dbutils.widgets.get("catalog")
-bronze_3p = f"{catalog}.{dbutils.widgets.get('bronze_table')}"
-silver_3p = f"{catalog}.{dbutils.widgets.get('silver_table')}"
-adls_base = dbutils.widgets.get("adls_base").rstrip("/")
+catalog = _conf("catalog", "adb_std")
+# bronze streaming table defined in dust_file_to_bronze.py (same pipeline -> runs first)
+bronze_3p = f"{catalog}.{_conf('bronze_table', 'bronze.iot_raw_st')}"
+silver_3p = f"{catalog}.{_conf('silver_table', 'silver.iot_env_measurements')}"
+adls_base = _conf("adls_base", "abfss://iot@adls2tdstudent.dfs.core.windows.net").rstrip("/")
 
 silver_path = f"{adls_base}/silver/iot_env_measurements"
 checkpoint_path = f"{adls_base}/silver/_checkpoints/iot_measurements"
 
 # 2. ensure external silver table exists ADLS2
-# DDL is not allowed at pipeline top level; it runs inside the sink handler instead
 silver_ddl = f"""
     CREATE TABLE IF NOT EXISTS {silver_3p} (
         value DOUBLE,
@@ -112,6 +112,8 @@ def upsert_to_silver( micro_batch_df, batch_id):
         "t.device_id = s.device_id AND t.sensor_id = s.sensor_id AND t.measured_at = s.measured_at"
         ).whenMatchedUpdateAll().whenNotMatchedInsertAll().execute()
 # 6. run incremental batch (checkpoint and trigger are managed by the pipeline)
-@dp.append_flow(target="upsert_to_silver")
-def bronze_to_silver_flow():
+#    reading the pipeline-owned bronze table makes the pipeline run bronze first.
+#    new flow name -> fresh checkpoint for the new bronze source (MERGE keeps silver idempotent)
+@dp.append_flow(target="upsert_to_silver", name="bronze_st_to_silver_flow")
+def bronze_st_to_silver_flow():
     return build_silver_df(spark.readStream.table(bronze_3p))

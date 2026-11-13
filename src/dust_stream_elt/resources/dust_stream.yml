@@ -9,6 +9,14 @@ resources:
       serverless: true
       root_path: "../src/pipe_dust_stream_elt"
 
+      # read in code with spark.conf.get("<key>")
+      configuration:
+        catalog: ${var.catalog}
+        bronze_table: ${var.bronze_table}
+        silver_table: "silver.iot_env_measurements"
+        landing_path: ${var.landing_path}
+        adls_base: ${var.adls_base}
+
       libraries:
         - glob:
             include: ../src/pipe_dust_stream_elt/transformations/**
